@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JSPM College Voice Agent</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Color Scheme */
+    :root {
+      --dark-blue: #1a1a2e;
+      --navy-blue: #16213e;
+      --deep-blue: #0f3460;
+      --white: #ffffff;
+      --off-white: #f0f0f0;
+      --red-violet: #8e2de2;
+      --violet: #a45de2;
+      --light-violet: #c08df0;
+      --success: #4ade80;
+      --error: #f87171;
+    }
+
+    /* Reset & Base */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    body {
+      background: linear-gradient(135deg, var(--dark-blue), var(--navy-blue));
+      color: var(--white);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      line-height: 1.6;
+    }
+
+    /* Setup Panel */
+    .setup-panel {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      width: 100%;
+      max-width: 600px;
+      text-align: center;
+      border: 1px solid rgba(142, 45, 226, 0.2);
+      animation: fadeIn 0.8s ease;
+    }
+
+    .setup-panel.hidden {
+      display: none;
+    }
+
+    .logo {
+      font-size: 3.5rem;
+      margin-bottom: 20px;
+      color: var(--red-violet);
+      text-shadow: 0 0 15px rgba(142, 45, 226, 0.7);
+    }
+
+    .setup-panel h1 {
+      font-size: 2.2rem;
+      margin-bottom: 15px;
+      background: linear-gradient(to right, var(--white), var(--light-violet));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .setup-panel p {
+      color: var(--off-white);
+      margin-bottom: 25px;
+      font-size: 1.1rem;
+    }
+
+    .url-input {
+      width: 100%;
+      padding: 16px 20px;
+      border: 2px solid rgba(142, 45, 226, 0.3);
+      border-radius: 12px;
+      font-size: 1rem;
+      margin-bottom: 25px;
+      background: rgba(10, 10, 20, 0.4);
+      color: var(--white);
+      transition: all 0.3s ease;
+    }
+
+    .url-input:focus {
+      border-color: var(--red-violet);
+      outline: none;
+      box-shadow: 0 0 15px rgba(142, 45, 226, 0.4);
+    }
+
+    .btn {
+      background: var(--red-violet);
+      border: none;
+      color: white;
+      padding: 16px 40px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 1.1rem;
+      font-weight: 600;
+      transition: all 0.3s;
+      display: inline-block;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 5px 15px rgba(142, 45, 226, 0.4);
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+      transition: 0.5s;
+    }
+
+    .btn:hover::before {
+      left: 100%;
+    }
+
+    .btn:hover {
+      background: var(--violet);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(142, 45, 226, 0.6);
+    }
+
+    .error-container {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 10px;
+      background: rgba(248, 113, 113, 0.15);
+      border: 1px solid var(--error);
+      color: var(--error);
+      display: none;
+    }
+
+    /* Chat Container */
+    .chat-container {
+      width: 100%;
+      max-width: 900px;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+      height: 85vh;
+      display: none;
+      border: 1px solid rgba(142, 45, 226, 0.2);
+    }
+
+    .chat-container.active {
+      display: flex;
+    }
+
+    /* Header */
+    .header {
+      background: rgba(15, 52, 96, 0.5);
+      padding: 20px;
+      text-align: center;
+      position: relative;
+      border-bottom: 1px solid rgba(142, 45, 226, 0.2);
+    }
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .college-info {
+      text-align: left;
+    }
+
+    .college-info h1 {
+      font-size: 1.8rem;
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .college-info h1 i {
+      color: var(--red-violet);
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+      color: var(--off-white);
+    }
+
+    .status-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 10px var(--success);
+    }
+
+    .voice-control {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    /* Chat Messages */
+    .chat-messages {
+      flex: 1;
+      padding: 25px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      background: rgba(10, 15, 30, 0.3);
+    }
+
+    .message {
+      max-width: 80%;
+      padding: 18px 22px;
+      border-radius: 18px;
+      line-height: 1.5;
+      position: relative;
+      animation: fadeIn 0.4s ease;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .user-message {
+      align-self: flex-end;
+      background: linear-gradient(135deg, var(--red-violet), var(--deep-blue));
+      color: var(--white);
+      border-bottom-right-radius: 5px;
+    }
+
+    .bot-message {
+      align-self: flex-start;
+      background: rgba(30, 30, 60, 0.7);
+      color: var(--off-white);
+      border-bottom-left-radius: 5px;
+    }
+
+    .message-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+
+    .message-header i {
+      font-size: 1.2rem;
+    }
+
+    /* Controls */
+    .controls {
+      padding: 20px;
+      background: rgba(15, 52, 96, 0.4);
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      border-top: 1px solid rgba(142, 45, 226, 0.2);
+    }
+
+    .mic-btn {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      border: none;
+      background: var(--red-violet);
+      cursor: pointer;
+      color: white;
+      font-size: 1.8rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: all 0.3s ease;
+      box-shadow: 0 5px 15px rgba(142, 45, 226, 0.4);
+    }
+
+    .mic-btn:hover {
+      background: var(--violet);
+      transform: scale(1.05);
+    }
+
+    .mic-btn.listening {
+      background: var(--error);
+      animation: pulse 1.5s infinite;
+      box-shadow: 0 0 20px rgba(248, 113, 113, 0.6);
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0.7); }
+      70% { box-shadow: 0 0 0 20px rgba(248, 113, 113, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0); }
+    }
+
+    /* Text Chat Toggle */
+    .toggle-text-chat {
+      position: absolute;
+      bottom: 100px;
+      right: 30px;
+      background: rgba(30, 30, 60, 0.8);
+      color: var(--off-white);
+      padding: 10px 20px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(142, 45, 226, 0.3);
+    }
+
+    .toggle-text-chat:hover {
+      background: rgba(142, 45, 226, 0.3);
+      transform: translateY(-3px);
+    }
+
+    /* Text Chat Input */
+    .text-chat-container {
+      position: absolute;
+      bottom: 100px;
+      right: 30px;
+      width: 350px;
+      padding: 20px;
+      background: rgba(30, 30, 60, 0.95);
+      border-radius: 18px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      display: none;
+      border: 1px solid rgba(142, 45, 226, 0.3);
+      z-index: 10;
+    }
+
+    .text-chat-container.active {
+      display: block;
+      animation: slideUp 0.4s ease;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .text-chat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .text-chat-header h3 {
+      font-size: 1.2rem;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: var(--off-white);
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: color 0.3s;
+    }
+
+    .close-btn:hover {
+      color: var(--red-violet);
+    }
+
+    .text-input-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    #messageInput {
+      flex: 1;
+      padding: 14px 18px;
+      border-radius: 12px;
+      border: 1px solid rgba(142, 45, 226, 0.3);
+      background: rgba(10, 10, 20, 0.6);
+      color: var(--white);
+      font-size: 1rem;
+      outline: none;
+      transition: all 0.3s;
+    }
+
+    #messageInput:focus {
+      border-color: var(--red-violet);
+      box-shadow: 0 0 10px rgba(142, 45, 226, 0.3);
+    }
+
+    .send-btn {
+      background: var(--red-violet);
+      border: none;
+      border-radius: 12px;
+      width: 50px;
+      color: white;
+      cursor: pointer;
+      font-size: 1.2rem;
+      transition: background 0.3s;
+    }
+
+    .send-btn:hover {
+      background: var(--violet);
+    }
+
+    /* Typing Indicator */
+    .typing-indicator {
+      display: inline-flex;
+      align-items: center;
+      padding: 12px 22px;
+      background: rgba(30, 30, 60, 0.7);
+      border-radius: 18px;
+      color: var(--off-white);
+    }
+
+    .typing-dot {
+      width: 10px;
+      height: 10px;
+      background: var(--light-violet);
+      border-radius: 50%;
+      margin: 0 4px;
+      animation: typing 1.4s infinite ease-in-out;
+    }
+
+    .typing-dot:nth-child(1) { animation-delay: 0s; }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes typing {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-6px); }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .setup-panel, .chat-container {
+        padding: 25px;
+      }
+      
+      .header-content {
+        flex-direction: column;
+        gap: 15px;
+      }
+      
+      .college-info, .voice-control {
+        width: 100%;
+        justify-content: center;
+      }
+      
+      .text-chat-container {
+        width: 90%;
+        right: 5%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Setup Panel -->
+  <div class="setup-panel" id="setupPanel">
+    <div class="logo">
+      <i class="fas fa-robot"></i>
+    </div>
+    <h1>JSPM College Voice Agent</h1>
+    <p>Enter the API URL provided by Google Colab to connect to your personal AI assistant. The model runs on Google's servers while you interact via voice commands.</p>
+    
+    <input 
+      type="text" 
+      id="apiUrl" 
+      class="url-input" 
+      placeholder="https://your-ngrok-url.ngrok.io" 
+    />
+    
+    <button class="btn" id="connectBtn">
+      <i class="fas fa-plug"></i> Connect to Voice Agent
+    </button>
+    
+    <div class="error-container" id="errorContainer"></div>
+  </div>
+
+  <!-- Chat Container -->
+  <div class="chat-container" id="chatContainer">
+    <div class="header">
+      <div class="header-content">
+        <div class="college-info">
+          <h1><i class="fas fa-graduation-cap"></i> JSPM College Voice Agent</h1>
+          <div class="status">
+            <div class="status-indicator"></div>
+            <span>Connected - Ready for voice commands</span>
+          </div>
+        </div>
+        <div class="voice-control">
+          <div class="status">
+            <div class="status-indicator" id="micStatus"></div>
+            <span>Microphone: <span id="micStatusText">Ready</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="chat-messages" id="chatMessages">
+      <div class="message bot-message">
+        <div class="message-header">
+          <i class="fas fa-robot"></i>
+          <span>JSPM Assistant</span>
+        </div>
+        <p>Hello! I'm your personal JSPM College voice assistant. You can ask me about courses, admissions, facilities, events, and more. Just press the microphone button and speak naturally!</p>
+      </div>
+    </div>
+    
+    <div class="controls">
+      <button class="mic-btn" id="micBtn" title="Start Voice Command">
+        <i class="fas fa-microphone"></i>
+      </button>
+    </div>
+    
+    <div class="toggle-text-chat" id="toggleTextChat">
+      <i class="fas fa-comment-alt"></i> Open Text Chat
+    </div>
+    
+    <div class="text-chat-container" id="textChatContainer">
+      <div class="text-chat-header">
+        <h3>Text Chat</h3>
+        <button class="close-btn" id="closeTextChat">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="text-input-group">
+        <input 
+          id="messageInput" 
+          type="text" 
+          placeholder="Type your question about JSPM College..." 
+          autocomplete="off"
+        />
+        <button class="send-btn" id="sendBtn">
+          <i class="fas fa-paper-plane"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // DOM Elements
+    const setupPanel = document.getElementById('setupPanel');
+    const chatContainer = document.getElementById('chatContainer');
+    const apiUrlInput = document.getElementById('apiUrl');
+    const connectBtn = document.getElementById('connectBtn');
+    const chatMessages = document.getElementById('chatMessages');
+    const micBtn = document.getElementById('micBtn');
+    const errorContainer = document.getElementById('errorContainer');
+    const micStatus = document.getElementById('micStatus');
+    const micStatusText = document.getElementById('micStatusText');
+    const toggleTextChat = document.getElementById('toggleTextChat');
+    const textChatContainer = document.getElementById('textChatContainer');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const closeTextChat = document.getElementById('closeTextChat');
+    
+    // App State
+    let apiBaseUrl = '';
+    let isListening = false;
+    let recognition = null;
+    let conversationHistory = [];
+    
+    // Initialize speech recognition
+    function initSpeechRecognition() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      
+      if (!SpeechRecognition) {
+        showError("Your browser doesn't support speech recognition. Please use Chrome or Edge.");
+        micBtn.disabled = true;
+        return;
+      }
+      
+      recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = false;
+      recognition.lang = 'en-US';
+      recognition.maxAlternatives = 1;
+      
+      recognition.onstart = () => {
+        isListening = true;
+        micBtn.classList.add('listening');
+        micStatus.style.background = 'var(--error)';
+        micStatusText.textContent = 'Listening...';
+        addMessage("Listening... Speak now", 'system');
+      };
+      
+      recognition.onresult = (event) => {
+        const transcript = event.results[event.results.length - 1][0].transcript;
+        if (transcript.trim()) {
+          processVoiceCommand(transcript);
+        }
+      };
+      
+      recognition.onerror = (event) => {
+        if (event.error === 'no-speech') {
+          // No speech detected, just restart listening
+          recognition.start();
+          return;
+        }
+        
+        showError(`Voice recognition error: ${event.error}`);
+        stopListening();
+        
+        if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+          showError('Microphone access denied. Please allow microphone access to use voice commands.');
+        }
+      };
+      
+      recognition.onend = () => {
+        stopListening();
+        // Automatically restart listening if it was active
+        if (isListening) {
+          setTimeout(() => {
+            try {
+              recognition.start();
+            } catch (e) {
+              console.error("Error restarting recognition:", e);
+            }
+          }, 500);
+        }
+      };
+    }
+    
+    function startListening() {
+      if (!recognition) return;
+      
+      try {
+        recognition.start();
+      } catch (error) {
+        showError(`Error starting voice input: ${error}`);
+        stopListening();
+      }
+    }
+    
+    function stopListening() {
+      if (recognition && isListening) {
+        try {
+          recognition.stop();
+        } catch (e) { /* Ignore stop errors */ }
+      }
+      isListening = false;
+      micBtn.classList.remove('listening');
+      micStatus.style.background = 'var(--success)';
+      micStatusText.textContent = 'Ready';
+    }
+    
+    function showError(message) {
+      errorContainer.textContent = message;
+      errorContainer.style.display = 'block';
+      
+      // Auto-hide error after 5 seconds
+      setTimeout(() => {
+        errorContainer.style.display = 'none';
+      }, 5000);
+    }
+    
+    function clearError() {
+      errorContainer.style.display = 'none';
+    }
+    
+    function addMessage(text, sender) {
+      const messageEl = document.createElement('div');
+      
+      if (sender === 'system') {
+        messageEl.className = 'message typing-indicator';
+        messageEl.innerHTML = `
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <span style="margin-left: 10px;">${text}</span>
+        `;
+      } else {
+        messageEl.className = `message ${sender}-message`;
+        messageEl.innerHTML = `
+          <div class="message-header">
+            <i class="fas ${sender === 'user' ? 'fa-user' : 'fa-robot'}"></i>
+            <span>${sender === 'user' ? 'You' : 'JSPM Assistant'}</span>
+          </div>
+          <p>${text}</p>
+        `;
+      }
+      
+      chatMessages.appendChild(messageEl);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    async function processVoiceCommand(command) {
+      addMessage(command, 'user');
+      
+      // Show typing indicator
+      const typingEl = document.createElement('div');
+      typingEl.className = 'message typing-indicator';
+      typingEl.innerHTML = `
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <span style="margin-left: 10px;">Assistant is thinking...</span>
+      `;
+      chatMessages.appendChild(typingEl);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      
+      try {
+        // Simulate API call
+        setTimeout(() => {
+          // Remove typing indicator
+          typingEl.remove();
+          
+          // Simulate response based on command
+          let response = "I can help you with that!";
+          
+          if (command.toLowerCase().includes("course")) {
+            response = "JSPM College offers a variety of courses including Engineering, Management, Pharmacy, and Computer Applications. Which specific course are you interested in?";
+          } else if (command.toLowerCase().includes("admission")) {
+            response = "Admissions for the upcoming academic year will begin in June. You can apply online through our website or visit the admission office for assistance.";
+          } else if (command.toLowerCase().includes("facility")) {
+            response = "Our campus features state-of-the-art facilities including modern labs, a well-stocked library, sports complex, and comfortable hostels. Would you like details about any specific facility?";
+          }
+          
+          addMessage(response, 'bot');
+        }, 2000);
+      } catch (error) {
+        typingEl.remove();
+        addMessage("Error connecting to AI server. Please check your connection.", 'bot');
+      }
+    }
+    
+    // Event listeners
+    connectBtn.addEventListener('click', () => {
+      const url = apiUrlInput.value.trim();
+      if (!url) {
+        showError("Please enter a valid URL");
+        return;
+      }
+      
+      if (!url.startsWith('http')) {
+        showError("URL must start with http:// or https://");
+        return;
+      }
+      
+      apiBaseUrl = url;
+      setupPanel.classList.add('hidden');
+      chatContainer.classList.add('active');
+      initSpeechRecognition();
+      
+      // Start listening automatically after connection
+      setTimeout(() => {
+        startListening();
+      }, 1000);
+    });
+    
+    micBtn.addEventListener('click', () => {
+      if (isListening) {
+        stopListening();
+      } else {
+        startListening();
+      }
+    });
+    
+    toggleTextChat.addEventListener('click', () => {
+      textChatContainer.classList.add('active');
+    });
+    
+    closeTextChat.addEventListener('click', () => {
+      textChatContainer.classList.remove('active');
+    });
+    
+    sendBtn.addEventListener('click', () => {
+      const message = messageInput.value.trim();
+      if (message) {
+        processVoiceCommand(message);
+        messageInput.value = '';
+      }
+    });
+    
+    messageInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        sendBtn.click();
+      }
+    });
+    
+    // Load any saved URL from localStorage
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedUrl = localStorage.getItem('jspm_api_url');
+      if (savedUrl) {
+        apiUrlInput.value = savedUrl;
+      }
+      
+      // Check if we have microphone permission
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(() => {
+          micStatus.style.background = 'var(--success)';
+          micStatusText.textContent = 'Ready';
+        })
+        .catch(() => {
+          micStatus.style.background = 'var(--error)';
+          micStatusText.textContent = 'Permission needed';
+        });
+    });
+    
+    connectBtn.addEventListener('click', () => {
+      const url = apiUrlInput.value.trim();
+      localStorage.setItem('jspm_api_url', url);
+    });
+  </script>
+</body>
+</html>
